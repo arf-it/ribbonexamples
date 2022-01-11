@@ -23,9 +23,13 @@ public:
         static_cast<void>(pBar);
         static_cast<void>(bActive);
         static_cast<void>(rectButtons);
-        CBrush brush(GetSysColor(COLOR_INACTIVEBORDER));
-        pDC->FillRect(rectCaption, &brush);
-        return static_cast<COLORREF>(-1);
+        CBrush brush_i(GetSysColor(COLOR_INACTIVEBORDER));
+        CBrush brush_a(GetSysColor(COLOR_ACTIVEBORDER));
+        //pDC->FillRect(rectCaption, &brush);
+
+        pDC->FillRect(rectCaption, bActive ? &brush_i : &brush_i);
+
+        return bActive ? GetGlobalData()->clrCaptionText : GetGlobalData()->clrInactiveCaptionText;
     }
 
     virtual COLORREF OnDrawPropertySheetListItem(
@@ -394,8 +398,6 @@ public:
         {
             CMenuImages::Draw(pDC, CMenuImages::IdCheck, rect, CMenuImages::ImageBlack);
         }
-        //m_uiElements.DrawEx(pDC, rect, 0,CMFCToolBarImages::ImageAlignHorzCenter,
-        //    CMFCToolBarImages::ImageAlignVertCenter, imgRect);
 
 
     }
@@ -704,10 +706,71 @@ public:
         static_cast<void>(pButton);
         static_cast<void>(rect);
         static_cast<void>(uiState);
+
         CBrush brush(GetSysColor(COLOR_BTNSHADOW));
+
         CRect tabRect;
         pWndTab->GetTabsRect(tabRect);
         pDC->FillRect(tabRect, &brush);
+    }
+
+    virtual void OnDrawCaptionButton(
+        CDC* pDC,
+        CMFCCaptionButton* pButton,
+        BOOL bActive,
+        BOOL bHorz,
+        BOOL bMaximized,
+        BOOL bDisabled,
+        int nImageID = -1)
+    {
+        ASSERT_VALID(pDC);
+        ENSURE(pButton != NULL);
+
+
+        CBrush brush_hi(RGB(0xED, 0xF4, 0xFC));
+
+
+        CRect rc = pButton->GetRect();
+
+        if (pButton->m_bPushed && (pButton->m_bFocused || pButton->m_bDroppedDown) && !bDisabled)
+        {
+            OnFillHighlightedArea(pDC, rc, &brush_hi, NULL);
+            bActive = TRUE;
+        }
+        else if (pButton->m_bPushed || pButton->m_bFocused || pButton->m_bDroppedDown)
+        {
+            if (!bDisabled)
+            {
+                OnFillHighlightedArea(pDC, rc, &brush_hi, NULL);
+            }
+
+            bActive = FALSE;
+        }
+
+        CMenuImages::IMAGES_IDS id = (CMenuImages::IMAGES_IDS)-1;
+
+        if (nImageID != -1)
+        {
+            id = (CMenuImages::IMAGES_IDS)nImageID;
+        }
+        else
+        {
+            id = pButton->GetIconID(bHorz, bMaximized);
+        }
+
+        if (id != (CMenuImages::IMAGES_IDS)-1)
+        {
+            CSize sizeImage = CMenuImages::Size();
+            CPoint ptImage(rc.left + (rc.Width() - sizeImage.cx) / 2, rc.top + (rc.Height() - sizeImage.cy) / 2);
+
+            OnDrawCaptionButtonIcon(pDC, pButton, id, bActive, bDisabled, ptImage);
+        }
+
+        if ((pButton->m_bPushed || pButton->m_bFocused || pButton->m_bDroppedDown) && !bDisabled)
+        {
+            COLORREF clrDark = RGB(0xA8, 0xD2, 0xFD);
+            pDC->Draw3dRect(rc, clrDark, clrDark);
+        }
     }
 
     virtual void OnEraseTabsArea(
