@@ -66,7 +66,7 @@ public:
             pDC->FillSolidRect(pButton->GetRect(), m_clrWindows10Bar);
             return GetSysColor(COLOR_WINDOWTEXT);
         }
-        return RGB(0xFE,0xFE,0xFF);
+        return RGB(0xFE, 0xFE, 0xFF);
     }
 
     virtual void OnDrawRibbonMainPanelButtonBorder(
@@ -176,6 +176,169 @@ public:
         clrText = GetSysColor(COLOR_MENUTEXT);
     }
 
+
+    virtual void OnDrawButtonBorder(
+        CDC* pDC,
+        CMFCToolBarButton* pButton,
+        CRect rect,
+        CMFCVisualManager::AFX_BUTTON_STATE state)
+    {
+        if (state == CMFCVisualManager::AFX_BUTTON_STATE::ButtonsIsHighlighted)
+        {
+            CPen pen(PS_SOLID, 1, RGB(0xA8, 0xD2, 0xFD));
+            pDC->SelectObject(pen);
+            pDC->SelectStockObject(NULL_BRUSH);
+            pDC->Rectangle(rect);
+        }
+
+        if (state == CMFCVisualManager::AFX_BUTTON_STATE::ButtonsIsPressed)
+        {
+            CPen pen(PS_SOLID, 1, RGB(0xA8, 0xD2, 0xFD));
+            pDC->SelectObject(pen);
+            pDC->SelectStockObject(NULL_BRUSH);
+            pDC->Rectangle(rect);
+        }
+
+    }
+
+    virtual void OnDrawRibbonButtonBorder(
+        CDC* pDC,
+        CMFCRibbonButton* pButton)
+    {
+        CRect rect(pButton->GetRect());
+
+
+        if (pButton->IsHighlighted() || pButton->IsDroppedDown() || pButton->IsFocused())
+        {
+            CPen pen(PS_SOLID, 1, RGB(0xA8, 0xD2, 0xFD));
+            pDC->SelectObject(pen);
+            pDC->SelectStockObject(NULL_BRUSH);
+            pDC->Rectangle(rect);
+        }
+
+    }
+
+    virtual void OnFillButtonInterior(
+        CDC* pDC,
+        CMFCToolBarButton* pButton,
+        CRect rect,
+        CMFCVisualManager::AFX_BUTTON_STATE state)
+    {
+        if (state == CMFCVisualManager::AFX_BUTTON_STATE::ButtonsIsHighlighted)
+        {
+            // #EDF4FC
+            pDC->FillSolidRect(rect, RGB(0xED, 0xF4, 0xFC));
+        }
+        else {
+            //// #CEE5FC
+            //pDC->SelectStockObject(NULL_PEN);
+            //pDC->FillSolidRect(rect, RGB(0xCE, 0xE5, 0xFC));
+
+            //// #64A5E6
+            //CPen pen(PS_SOLID, 1, RGB(0x64, 0xA5, 0xE6));
+            //pDC->SelectObject(pen);
+            //pDC->SelectStockObject(NULL_BRUSH);
+            //pDC->Rectangle(rect);
+        }
+
+
+    }
+
+    virtual void OnDrawEditBorder(
+        CDC* pDC,
+        CRect rect,
+        BOOL bDisabled,
+        BOOL bIsHighlighted,
+        CMFCToolBarEditBoxButton* pButton)
+    {
+        if (bIsHighlighted)
+        {
+            // #64A5E6
+            CPen pen(PS_SOLID, 1, RGB(0x64, 0xA5, 0xE6));
+
+            pDC->SelectObject(pen);
+            pDC->SelectStockObject(NULL_BRUSH);
+            pDC->Rectangle(rect);
+        }
+        else
+        {
+            CPen pen(PS_SOLID, 1, RGB(0xA8, 0xD2, 0xFD));
+
+            pDC->SelectObject(pen);
+            pDC->SelectStockObject(NULL_BRUSH);
+            pDC->Rectangle(rect);
+        }
+
+
+    }
+
+    virtual void OnDrawSeparator(
+        CDC* pDC,
+        CBasePane* pBar,
+        CRect rect,
+        BOOL bIsHoriz)
+    {
+        if (pBar->IsKindOf(RUNTIME_CLASS(CMFCPopupMenuBar)))
+        {
+
+            CRect rectSeparator(rect);
+
+            rectSeparator.left = rect.left + CMFCToolBar::GetMenuImageSize().cx + GetMenuImageMargin() + 1;
+
+            CRect rectBar;
+            pBar->GetClientRect(rectBar);
+
+            if (rectBar.right - rectSeparator.right < 50) // Last item in row
+            {
+                rectSeparator.right = rectBar.right;
+            }
+
+            if (((CMFCPopupMenuBar*)pBar)->m_bDisableSideBarInXPMode)
+            {
+                rectSeparator.left = 0;
+            }
+
+            //---------------------------------
+            // Maybe Quick Customize separator
+            //---------------------------------
+
+            CWnd* pWnd = pBar->GetParent();
+            if (pWnd != NULL && pWnd->IsKindOf(RUNTIME_CLASS(CMFCPopupMenu)))
+            {
+                CMFCPopupMenu* pMenu = (CMFCPopupMenu*)pWnd;
+                if (pMenu->IsCustomizePane())
+                {
+                    rectSeparator.left = rect.left + 2 * CMFCToolBar::GetMenuImageSize().cx + 3 * GetMenuImageMargin() + 2;
+                }
+            }
+
+
+            CPen pen(PS_SOLID, 1, GetSysColor(COLOR_BTNFACE));
+            CPen pen2(PS_SOLID, 1, GetSysColor(COLOR_3DLIGHT));
+
+
+            DrawSeparator(pDC, rectSeparator, pen, pen2, !bIsHoriz);
+
+            return;
+        }
+
+        CMFCVisualManagerOffice2007::OnDrawSeparator(pDC, pBar, rect, bIsHoriz);
+
+
+    }
+
+    virtual void OnDrawMenuBorder(
+        CDC* pDC,
+        CMFCPopupMenu* pMenu,
+        CRect rect)
+    {
+        CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DLIGHT));
+
+        pDC->SelectObject(pen);
+        pDC->SelectStockObject(NULL_BRUSH);
+        pDC->Rectangle(rect);
+    }
+
     virtual void OnDrawMenuCheck(
         CDC* pDC,
         CMFCToolBarMenuButton* pButton,
@@ -221,8 +384,20 @@ public:
             imgRect.OffsetRect(0, size.cy);
         }
 
-        m_uiElements.DrawEx(pDC, rect, 0,CMFCToolBarImages::ImageAlignHorzCenter,
-            CMFCToolBarImages::ImageAlignVertCenter, imgRect);
+        CMFCToolBarImages& img = bIsRadio ? m_MenuItemMarkerR : m_MenuItemMarkerC;
+
+        if (bIsRadio)
+        {
+            CMenuImages::Draw(pDC, CMenuImages::IdRadio, rect, CMenuImages::ImageBlack);
+        }
+        else
+        {
+            CMenuImages::Draw(pDC, CMenuImages::IdCheck, rect, CMenuImages::ImageBlack);
+        }
+        //m_uiElements.DrawEx(pDC, rect, 0,CMFCToolBarImages::ImageAlignHorzCenter,
+        //    CMFCToolBarImages::ImageAlignVertCenter, imgRect);
+
+
     }
 
     // The ribbons tab at the top where the categories are
@@ -235,12 +410,12 @@ public:
         if (bIsActive) {
             pDC->FillSolidRect(pTab->GetRect(), m_clrWindows10Bar);
 
-            CPen pen(PS_SOLID,1,GetSysColor(COLOR_3DLIGHT));
+            CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DLIGHT));
             pDC->SelectObject(pen);
             pDC->MoveTo(CPoint(pTab->GetRect().left, pTab->GetRect().bottom));
             pDC->LineTo(CPoint(pTab->GetRect().left, pTab->GetRect().top));
-            pDC->LineTo(CPoint(pTab->GetRect().right-1, pTab->GetRect().top));
-            pDC->LineTo(CPoint(pTab->GetRect().right-1, pTab->GetRect().bottom));
+            pDC->LineTo(CPoint(pTab->GetRect().right - 1, pTab->GetRect().top));
+            pDC->LineTo(CPoint(pTab->GetRect().right - 1, pTab->GetRect().bottom));
 
             CPen pen2(PS_SOLID, 1, m_clrWindows10Bar);
             pDC->SelectObject(pen2);
@@ -428,6 +603,30 @@ public:
             pDC->DrawText(str, rectTab, DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
             pDC->SetTextColor(clrTextOld);
         }
+
+        CRect rect = pTabWnd->GetTabCloseButton();
+        CBrush barface;
+        barface.CreateSolidBrush(GetGlobalData()->clrBarFace);
+
+        if (pTabWnd->IsTabCloseButtonHighlighted())
+        {
+            pDC->FillRect(rect, &barface);
+        }
+
+        //CBCGPMenuImages::Draw(pDC, CBCGPMenuImages::IdClose, rect, CBCGPMenuImages::ImageBlack);
+        CMenuImages::Draw(pDC, CMenuImages::IdClose, rect, CMenuImages::ImageBlack);
+
+        if (pTabWnd->IsTabCloseButtonHighlighted())
+        {
+            if (pTabWnd->IsTabCloseButtonPressed())
+            {
+                pDC->Draw3dRect(rect, GetGlobalData()->clrBarDkShadow, GetGlobalData()->clrBarHilite);
+            }
+            else
+            {
+                pDC->Draw3dRect(rect, GetGlobalData()->clrBarHilite, GetGlobalData()->clrBarDkShadow);
+            }
+        }
     }
 
     virtual void OnFillTab(
@@ -597,7 +796,7 @@ public:
         m_clrWindows10Bar = RGB(0xF5, 0xF6, 0xF7);
 
         // Windows 10 file menu application button color
-        m_clrWindows10ApplicationButton = RGB(0x19,0x79,0xCA);
+        m_clrWindows10ApplicationButton = RGB(0x19, 0x79, 0xCA);
     }
 
     virtual void OnDrawRibbonApplicationButton(
@@ -628,7 +827,7 @@ public:
         CRect rect)
     {
         static_cast<void>(pMenuBar);
-        pDC->FillSolidRect(rect, RGB(0xFF,0x00,0x00));
+        pDC->FillSolidRect(rect, RGB(0xFF, 0x00, 0x00));
     }
 
 public:
